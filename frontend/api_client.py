@@ -61,6 +61,19 @@ class Api:
             body["sql"] = sql
         return self._call("POST", f"/attempts/{attempt_id}/events", json=body)
 
+    def explain_error(
+        self, error: str, *, sql: str | None = None, attempt_id: str | None = None
+    ) -> dict:
+        body: dict[str, Any] = {"error": error}
+        if sql:
+            body["sql"] = sql
+        if attempt_id:
+            body["attempt_id"] = attempt_id
+        return self._call("POST", "/explain-error", json=body)
+
+    def progress(self, learner_id: str) -> dict:
+        return self._call("GET", f"/learners/{learner_id}/progress")
+
 
 def default_api() -> Api:
     base_url = os.environ.get("SQL_MITRA_API_URL", DEFAULT_API_URL)

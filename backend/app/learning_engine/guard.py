@@ -7,9 +7,34 @@ learner still has to fill in (not already shown in the skeleton) is blocked.
 Anything the learner has typed themselves is not a leak, so feedback can
 quote the parts of their own query that are already right."""
 
+import re
 from collections.abc import Iterable
 
+import sqlglot
+from sqlglot import exp
+
 from app.sql_engine.evaluator import normalize_sql
+
+_CODE = re.compile(r"```(?:sql)?\s*(.*?)```|`([^`\n]+)`", re.IGNORECASE | re.DOTALL)
+
+
+def rewrites_query(text: str, learner_sql: Iterable[str] = ()) -> bool:
+    """True if the text contains a complete SELECT ... FROM query in code formatting
+    that the learner did not write themselves, i.e. the mentor wrote it for them."""
+    known = {normalize_sql(s) for s in learner_sql}
+    for m in _CODE.finditer(text):
+        snippet = (m.group(1) or m.group(2) or "").strip()
+        # A skeleton with ____ blanks is a hint, not a finished query.
+        if not snippet or "__" in snippet or normalize_sql(snippet) in known:
+            continue
+        try:
+            trees = sqlglot.parse(snippet, read="sqlite")
+        except sqlglot.errors.SqlglotError:
+            continue
+        for tree in trees:
+            if isinstance(tree, exp.Query) and tree.find(exp.From):
+                return True
+    return False
 
 
 def hidden_lines(correct_sql: str, structure_hint: str) -> list[str]:

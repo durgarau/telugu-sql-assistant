@@ -5,17 +5,23 @@ from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from app.database.models import Attempt, Question
-from app.learning_engine import machine, tutor
-from app.sql_engine import evaluator, sandbox
+from app.learning_engine import error_explainer, machine, progress, tutor
+from app.sql_engine import error_catalog, evaluator, sandbox
 
 from .schemas import (
     ColumnOut,
     ErrorOut,
     EvaluationOut,
     EventIn,
+    ExplainErrorIn,
+    ExplainErrorOut,
+    LearnerId,
+    MistakeCountOut,
+    ProgressOut,
     QuestionOut,
     StartAttemptIn,
     TableOut,
+    TopicProgressOut,
     TurnOut,
 )
 
@@ -131,3 +137,55 @@ def post_event(
         status = 422 if e.code in VALIDATION_CODES else 409
         raise HTTPException(status, {"code": e.code, "message": e.message}) from e
     return _turn_out(turn)
+
+
+@router.post("/explain-error", response_model=ExplainErrorOut)
+def explain_error(
+    body: ExplainErrorIn, request: Request, db: Session = Depends(get_db)
+) -> ExplainErrorOut:
+    attempt = db.get(Attempt, body.attempt_id) if body.attempt_id else None
+    if body.attempt_id and attempt is None:
+        raise HTTPException(404, "attempt not found")
+    e = error_explainer.explain(
+        body.error, body.sql, attempt=attempt, provider=request.app.state.ai_provider
+    )
+    return ExplainErrorOut(
+        category=e.category,
+        dialect=e.dialect,
+        dialect_name=error_catalog.DIALECT_NAMES.get(e.dialect) if e.dialect else None,
+        token=e.token,
+        message=e.message,
+        source=e.source,
+    )
+
+
+@router.get("/learners/{learner_id}/progress", response_model=ProgressOut)
+def learner_progress(learner_id: LearnerId, db: Session = Depends(get_db)) -> ProgressOut:
+    p = progress.compute(db, learner_id)
+    return ProgressOut(
+        overall_percent=p.overall_percent,
+        total_questions=p.total_questions,
+        attempted=p.attempted,
+        solved_independently=p.solved_independently,
+        solved_with_hints=p.solved_with_hints,
+        needed_solution=p.needed_solution,
+        submissions=p.submissions,
+        accuracy_percent=p.accuracy_percent,
+        topics=[
+            TopicProgressOut(
+                topic=t.topic,
+                total=t.total,
+                attempted=t.attempted,
+                solved=t.solved,
+                needed_solution=t.needed_solution,
+                mastery_percent=t.mastery_percent,
+            )
+            for t in p.topics
+        ],
+        mistakes=[
+            MistakeCountOut(tag=tag, label=progress.label(tag), count=n) for tag, n in p.mistakes
+        ],
+        weak_topics=p.weak_topics,
+        strong_topics=p.strong_topics,
+        question_outcomes=p.question_outcomes,
+    )

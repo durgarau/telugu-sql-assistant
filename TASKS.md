@@ -71,8 +71,28 @@
 - One question per topic for SELECT/ORDER BY/GROUP BY, so "similar question" often moves to another topic. Phase 2 grows the bank.
 - Progress resets when the browser session ends (no accounts; by design for v0.1).
 
-## M5: Explain Error + basic progress (next)
+## M5: Explain Error + basic progress ✅ (2026-10-02)
 
-- [ ] "Explain Error" panel: paste a database error, get a Telugu-English explanation and a hint, not a rewritten query
-- [ ] Per-session progress view: solved independently / with hints / needed solution, from `attempt_events`
-- [ ] Phone layout: mentor actions reachable without scrolling past the tables
+- [x] Error catalog (`sql_engine/error_catalog.py`): 11 error types recognised from SQLite, MySQL, PostgreSQL, BigQuery and Oracle, each with a reviewed Telugu-English explanation (meaning, causes, where to look, hint, "now fix it yourself")
+- [x] `POST /explain-error`: catalog explanation, rephrased by the AI when a key is set; the AI reply is dropped if it rewrites the query, and inside a practice attempt the answer-leak guard also applies
+- [x] New guard `rewrites_query`: blocks a complete SELECT … FROM in code formatting that the learner didn't write; skeletons with `____` blanks are allowed
+- [x] UI "🔍 Explain Error" mode (paste an error + optional query, with MySQL/PostgreSQL/BigQuery examples) and a "🔍 ఈ error అర్థం ఏంటి?" button under practice errors
+- [x] `GET /learners/{id}/progress` from the event log: overall %, solved alone / with hints / needed solution, accuracy, topic mastery, weak/strong topics, mistake counts with Telugu labels, best outcome per question
+- [x] UI "📊 My Progress" mode
+- [x] Phone layout: mentor buttons now sit in the question card (Hint at 530px on a 375px screen, before the editor); tables moved to the bottom; the chat box only gets a fixed height once it is long
+- [x] Fixes found while testing: opening a question no longer counts as an attempt; MySQL syntax errors point at the first bad word; "division by zero" is no longer labelled PostgreSQL; switching modes no longer drops the current question, draft query and chat
+- [x] 348 tests (73 new backend, 5 new UI); 3 mutation checks caught (one survived at first and led to a stronger best-outcome test)
+- [x] Browser check: Explain Error and My Progress on desktop; phone layout positions measured
+
+**Known limits:**
+- The catalog covers common beginner errors only; anything else gets a general "how to read an error" explanation.
+- The rewrite guard only inspects code-formatted SQL; a full query written as plain prose would not be caught (the prompt forbids it, but this is not verified).
+- Progress is per browser session (anonymous learner id), with no streaks yet (needs dates; Phase 3).
+- Anyone who knows a learner id can read that learner's progress. Acceptable for anonymous v0.1; accounts are Phase 6.
+
+## v0.1 status
+
+M1–M5 are built. Before calling v0.1 done:
+- [ ] **Needs the OpenRouter key:** review AI-written Telugu-English across all teaching states and Explain Error, and tune the prompt
+- [ ] Grow the question bank to 10–15 (PROJECT_PLAN target; currently 5)
+- [ ] Walk the 12-step loop on 3 questions with a real learner

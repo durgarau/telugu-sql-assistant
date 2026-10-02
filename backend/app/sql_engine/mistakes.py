@@ -37,6 +37,18 @@ FACTS = {
     LIMIT_VALUE: "LIMIT value ని question తో మళ్ళీ compare చేయండి.",
 }
 
+LABELS = {
+    NULL_COMPARISON: "NULL ని `=` తో compare చేయడం",
+    MISSING_QUOTES: "Text values కి quotes మర్చిపోవడం",
+    IN_WITH_OR: "`IN` లోపల `OR` వాడటం",
+    AGGREGATE_IN_WHERE: "Aggregate ని WHERE లో వాడటం (HAVING కావాలి)",
+    MISSING_GROUP_BY: "GROUP BY మర్చిపోవడం",
+    ORDER_DIRECTION: "ORDER BY direction (ASC/DESC) తప్పు",
+    MISSING_ORDER_BY: "ORDER BY మర్చిపోవడం",
+    MISSING_LIMIT: "LIMIT మర్చిపోవడం",
+    LIMIT_VALUE: "LIMIT value తప్పు",
+}
+
 _NO_SUCH_COLUMN = re.compile(r"no such column: (\w+)", re.IGNORECASE)
 
 

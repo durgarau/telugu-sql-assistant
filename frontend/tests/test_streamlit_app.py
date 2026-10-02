@@ -147,6 +147,65 @@ def test_practice_tables_are_shown(at):
     assert any("orders" in m.value for m in at.markdown)
 
 
+PRACTICE, EXPLAIN, PROGRESS = "📝 Practice", "🔍 Explain Error", "📊 My Progress"
+
+
+def switch_mode(at: AppTest, mode: str) -> AppTest:
+    at.radio(key="mode").set_value(mode).run()
+    assert not at.exception, at.exception
+    return at
+
+
+def test_switching_modes_keeps_the_question_draft_and_chat(at):
+    click(at, "💡 Hint")
+    at.text_area(key="sql").input("SELECT name")
+    switch_mode(at, PROGRESS)
+    switch_mode(at, PRACTICE)
+    assert at.session_state["question_id"] == "select-customer-name-city"
+    assert at.session_state["turn"]["state"] == "CONCEPT_HINT"
+    assert at.text_area(key="sql").value == "SELECT name"
+    assert len(at.session_state["transcript"]) == 2
+
+
+def test_explain_error_mode_with_a_sample_error(at):
+    switch_mode(at, EXPLAIN)
+    click(at, "MySQL")
+    assert "Unknown column" in at.text_area(key="err_text").value
+    click(at, "🔍 Explain Error")
+    assert any("MySQL error" in c.value for c in at.caption)
+    text = "\n".join(m.value for m in at.markdown)
+    assert "**అర్థం:**" in text and "`cancelled`" in text
+
+
+def test_explain_error_mode_needs_an_error(at):
+    switch_mode(at, EXPLAIN)
+    click(at, "🔍 Explain Error")
+    assert any("paste" in i.value for i in at.info)
+
+
+def test_explain_this_error_button_inside_practice(at):
+    at.selectbox(key="topic").select("WHERE").run()
+    submit(at, "SELECT * FROM orders WHERE status = cancelled")
+    click(at, "🔍 ఈ error అర్థం ఏంటి?")
+    last = at.session_state["transcript"][-1]["text"]
+    assert last.startswith("**🔍 Error explanation**")
+    assert "`cancelled`" in last
+    assert "status = 'cancelled'" not in last
+
+
+def test_progress_mode_empty_then_after_solving(at):
+    switch_mode(at, PROGRESS)
+    assert any("ఇంకా ఏ question" in i.value for i in at.info)
+
+    switch_mode(at, PRACTICE)
+    submit(at, "select name, city from customers")
+    switch_mode(at, PROGRESS)
+    metrics = {m.label: m.value for m in at.metric}
+    assert metrics["✅ మీరే solve"] == "1"
+    assert metrics["🎯 Accuracy"] == "100%"
+    assert any("Strong: SELECT" in s.value for s in at.success)
+
+
 def test_backend_down_shows_a_friendly_error():
     at = _launch(Api(httpx.Client(base_url="http://127.0.0.1:9", timeout=0.5)))
     assert not at.exception

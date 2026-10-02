@@ -52,6 +52,8 @@ The sandbox is the security boundary. sqlglot is only there for friendly message
 | GET | `/health` | |
 | GET | `/questions`, `/questions/{id}` | No solutions or hints; list is in curriculum order |
 | GET | `/practice/schema` | Practice tables: columns, types, row count, 3 sample rows |
+| POST | `/explain-error` | `{error, sql?, attempt_id?}` → category, detected database, Telugu-English explanation. The catalog explanation is the base; the AI reply is dropped if it rewrites the query or (inside an attempt) leaks the answer |
+| GET | `/learners/{id}/progress` | Derived from the event log: outcomes, accuracy, topic mastery, mistake counts |
 | POST | `/attempts` | `{learner_id, question_id}` → starts at QUESTION_RECEIVED |
 | GET | `/attempts/{id}` | Resume: current state + last mentor message |
 | POST | `/attempts/{id}/events` | `{event, sql?, confirmed?}` → `409 {code, message}` for transitions that are not allowed |

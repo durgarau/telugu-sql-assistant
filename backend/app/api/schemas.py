@@ -1,8 +1,9 @@
-from typing import Any
+from typing import Annotated, Any
 
 from pydantic import BaseModel, Field, model_validator
 
 from app.learning_engine.states import Event, Outcome, State
+from app.sql_engine.error_catalog import MAX_ERROR_LENGTH
 from app.sql_engine.evaluator import MAX_SQL_LENGTH, Verdict
 
 
@@ -69,6 +70,55 @@ class TableOut(BaseModel):
     columns: list[ColumnOut]
     sample_rows: list[list[Any]]
     row_count: int
+
+
+LearnerId = Annotated[str, Field(min_length=1, max_length=64, pattern=r"^[A-Za-z0-9_-]+$")]
+
+
+class ExplainErrorIn(BaseModel):
+    error: str = Field(min_length=1, max_length=MAX_ERROR_LENGTH)
+    sql: str | None = Field(default=None, max_length=MAX_SQL_LENGTH)
+    attempt_id: str | None = Field(default=None, max_length=32)
+
+
+class ExplainErrorOut(BaseModel):
+    category: str
+    dialect: str | None
+    dialect_name: str | None
+    token: str | None
+    message: str
+    source: str
+
+
+class TopicProgressOut(BaseModel):
+    topic: str
+    total: int
+    attempted: int
+    solved: int
+    needed_solution: int
+    mastery_percent: int
+
+
+class MistakeCountOut(BaseModel):
+    tag: str
+    label: str
+    count: int
+
+
+class ProgressOut(BaseModel):
+    overall_percent: int
+    total_questions: int
+    attempted: int
+    solved_independently: int
+    solved_with_hints: int
+    needed_solution: int
+    submissions: int
+    accuracy_percent: int | None
+    topics: list[TopicProgressOut]
+    mistakes: list[MistakeCountOut]
+    weak_topics: list[str]
+    strong_topics: list[str]
+    question_outcomes: dict[str, str]
 
 
 class ErrorOut(BaseModel):

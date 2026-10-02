@@ -145,6 +145,29 @@ def _context(m: Material) -> str:
     return "\n\n".join(parts)
 
 
+def build_error_messages(
+    error: str, sql: str | None, dialect: str | None, reference_explanation: str
+) -> list[ChatMessage]:
+    """Explain Error: the catalog's reviewed explanation is the factual basis."""
+    query = f"## Their query\n```sql\n{_clip(sql)}\n```\n\n" if sql else ""
+    source = f" (looks like {dialect})" if dialect else ""
+    return [
+        ChatMessage("system", SYSTEM_PROMPT),
+        ChatMessage(
+            "user",
+            f"## Database error{source}\n```\n{_clip(error)}\n```\n\n{query}"
+            "## Reviewed explanation (factual basis, trust it)\n"
+            f"{reference_explanation}\n\n"
+            "## Your task\n"
+            "A learner pasted this error. Explain it in your own words, specific to their "
+            "query if given: 1) what the error means, 2) the likely cause, 3) which part of "
+            "the query to inspect, 4) one hint, 5) ask them to fix it themselves. "
+            "Never write the corrected query or a corrected clause; point to the place "
+            "with a ____ blank instead. About 150 words.",
+        ),
+    ]
+
+
 def build_messages(state: State, m: Material) -> list[ChatMessage]:
     task = TASKS[state](m)
     return [
