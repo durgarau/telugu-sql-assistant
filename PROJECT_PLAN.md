@@ -16,7 +16,7 @@ MUST
 - Guided-learning state machine, enforced server-side
 - Telugu-English mentor (one provider: OpenRouter)
 - Evaluation of student SQL by executing it in a read-only sandbox and comparing results
-- 10–15 hand-written beginner questions (SELECT, WHERE, ORDER BY, LIMIT, GROUP BY)
+- 20 hand-written questions across SELECT, WHERE, ORDER BY, Aggregates, GROUP BY and HAVING (easy → hard)
 - Streamlit UI: question, SQL editor, mentor panel, Hint / Check / Show Solution buttons
 
 Not in v0.1: accounts, gamification, interview mode, daily challenge, multiple dialects, a React frontend.

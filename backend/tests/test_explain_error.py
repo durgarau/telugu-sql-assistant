@@ -1,10 +1,18 @@
+import json
+from collections import Counter
+
 import pytest
 
+from app.config import Settings
 from app.learning_engine import error_explainer
 from app.learning_engine.guard import rewrites_query
+from app.learning_engine.tutor import CURRICULUM
 from app.sql_engine import error_catalog as ec
 
 from .helpers import FailingProvider, FakeProvider, event, start
+
+BANK = json.loads(Settings().questions_path.read_text(encoding="utf-8"))
+TOPIC_SIZES = Counter(q["topic"] for q in BANK)
 
 # Real error messages, copied in the shape each database prints them.
 ERRORS = [
@@ -213,7 +221,7 @@ def test_new_learner_has_empty_progress(client):
     p = client.get("/learners/fresh-learner/progress").json()
     assert p["overall_percent"] == 0 and p["attempted"] == 0
     assert p["accuracy_percent"] is None
-    assert [t["topic"] for t in p["topics"]] == ["SELECT", "WHERE", "ORDER BY", "GROUP BY"]
+    assert [t["topic"] for t in p["topics"]] == CURRICULUM
     assert p["mistakes"] == [] and p["weak_topics"] == []
 
 
@@ -249,8 +257,8 @@ def test_progress_counts_outcomes_mistakes_and_topics(client):
 
     p = client.get("/learners/ravi/progress").json()
     assert (p["solved_independently"], p["solved_with_hints"], p["needed_solution"]) == (1, 1, 1)
-    assert p["attempted"] == 3 and p["total_questions"] == 5
-    assert p["overall_percent"] == 40  # 2 of 5 solved without the solution
+    assert p["attempted"] == 3 and p["total_questions"] == len(BANK)
+    assert p["overall_percent"] == round(100 * 2 / len(BANK))  # 2 solved without the solution
     assert p["submissions"] == 4 and p["accuracy_percent"] == 50
     assert {m["tag"]: m["count"] for m in p["mistakes"]} == {
         "missing_quotes": 1,
@@ -258,18 +266,29 @@ def test_progress_counts_outcomes_mistakes_and_topics(client):
     }
     assert p["mistakes"][0]["label"]
     topics = {t["topic"]: t for t in p["topics"]}
-    assert topics["SELECT"]["mastery_percent"] == 100
+    where_total = TOPIC_SIZES["WHERE"]
     assert topics["WHERE"] == {
         "topic": "WHERE",
-        "total": 2,
+        "total": where_total,
         "attempted": 1,
         "solved": 1,
         "needed_solution": 0,
-        "mastery_percent": 50,
+        "mastery_percent": round(100 / where_total),
     }
-    assert p["strong_topics"] == ["SELECT"]
+    # One perfect WHERE solve out of many WHERE questions is not a weakness,
+    # and one SELECT solve is not yet enough evidence of strength.
     assert p["weak_topics"] == ["ORDER BY"]
+    assert p["strong_topics"] == []
     assert p["question_outcomes"]["order-by-top-5-amount"] == "needed_solution"
+
+    _solve(
+        client,
+        "ravi",
+        "select-distinct-order-cities",
+        (sub, {"sql": "select distinct city from orders"}),
+    )
+    p = client.get("/learners/ravi/progress").json()
+    assert p["strong_topics"] == ["SELECT"]
 
 
 def test_progress_keeps_the_best_outcome_across_retries(client):

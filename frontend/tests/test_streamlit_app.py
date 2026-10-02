@@ -203,7 +203,8 @@ def test_progress_mode_empty_then_after_solving(at):
     metrics = {m.label: m.value for m in at.metric}
     assert metrics["✅ మీరే solve"] == "1"
     assert metrics["🎯 Accuracy"] == "100%"
-    assert any("Strong: SELECT" in s.value for s in at.success)
+    bars = [b.proto.text for b in at.get("progress")]
+    assert any(t.startswith("SELECT · 1/") for t in bars), bars
 
 
 def test_backend_down_shows_a_friendly_error():

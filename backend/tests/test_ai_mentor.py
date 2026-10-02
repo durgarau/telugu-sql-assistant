@@ -75,6 +75,14 @@ def test_hidden_lines_are_the_parts_the_learner_must_produce(q):
         assert line not in normalize_sql(q.structure_hint)
 
 
+def test_guard_blocks_continuation_lines_without_their_and_or_comma():
+    sql = "SELECT a,\n       MAX(b) AS m\nFROM t\nWHERE x = 1\n  AND y = 'UPI'"
+    skeleton = "SELECT a,\n       ____(b) AS m\nFROM t\nWHERE x = ____\n  AND y = ____"
+    assert leaks_solution("just use `y = 'UPI'`", sql, skeleton)
+    assert leaks_solution("try MAX(b) AS m here", sql, skeleton)
+    assert not leaks_solution("`AND` తో రెండో condition కలపండి", sql, skeleton)
+
+
 def test_guard_blocks_a_single_answer_clause():
     q = next(q for q in QUESTIONS if q.id == "group-by-city-order-count")
     assert leaks_solution("Just add `GROUP BY city` 🙂", q.correct_sql, q.structure_hint)

@@ -10,6 +10,26 @@
     "correct_sql": "SELECT name, city\nFROM customers"
   },
   {
+    "id": "select-distinct-order-cities",
+    "topic": "SELECT",
+    "difficulty": "easy",
+    "prompt_text": "List every city that appears in the orders table, without duplicates. Show only the city column.",
+    "concepts": ["SELECT", "DISTINCT"],
+    "structure_hint": "SELECT ____ city\nFROM ____",
+    "strong_hint": "ఒకే city orders లో చాలాసార్లు వస్తుంది. Duplicates తీసేయడానికి SELECT తర్వాత, column కి ముందు ఒక keyword పెట్టాలి. ఆ keyword ఏంటో గుర్తుందా?",
+    "correct_sql": "SELECT DISTINCT city\nFROM orders"
+  },
+  {
+    "id": "select-amount-with-gst",
+    "topic": "SELECT",
+    "difficulty": "medium",
+    "prompt_text": "Show order_id, amount, and the amount including 18% GST as amount_with_gst for every order.",
+    "concepts": ["SELECT", "Arithmetic", "Alias"],
+    "structure_hint": "SELECT order_id, amount, ____ AS amount_with_gst\nFROM orders",
+    "strong_hint": "18% GST కలిపితే మొత్తం 100% + 18% = 118% అవుతుంది. అంటే amount ని ఏ decimal number తో multiply చేయాలి?",
+    "correct_sql": "SELECT order_id, amount, amount * 1.18 AS amount_with_gst\nFROM orders"
+  },
+  {
     "id": "where-cancelled-orders",
     "topic": "WHERE",
     "difficulty": "easy",
@@ -30,6 +50,56 @@
     "correct_sql": "SELECT order_id, amount\nFROM orders\nWHERE status = 'delivered'"
   },
   {
+    "id": "where-in-cities",
+    "topic": "WHERE",
+    "difficulty": "easy",
+    "prompt_text": "Show the name and city of customers who live in Hyderabad, Vijayawada or Visakhapatnam.",
+    "concepts": ["WHERE", "IN"],
+    "structure_hint": "SELECT name, city\nFROM customers\nWHERE city ____ (____, ____, ____)",
+    "strong_hint": "ఒకే column ని చాలా values తో check చేయాలంటే IN వాడతాం. City పేర్లు text కాబట్టి ప్రతి దాన్ని quotes లో పెట్టి, comma తో వేరు చేయండి.",
+    "correct_sql": "SELECT name, city\nFROM customers\nWHERE city IN ('Hyderabad', 'Vijayawada', 'Visakhapatnam')"
+  },
+  {
+    "id": "where-null-payment",
+    "topic": "WHERE",
+    "difficulty": "easy",
+    "prompt_text": "Show order_id and status for orders whose payment method is missing (NULL).",
+    "concepts": ["WHERE", "IS NULL"],
+    "structure_hint": "SELECT order_id, status\nFROM orders\nWHERE payment_method ____",
+    "strong_hint": "NULL అంటే 'value లేదు'. దాన్ని `=` తో compare చేస్తే ఎప్పుడూ true రాదు. NULL check కోసం ప్రత్యేకమైన రెండు words ఉన్నాయి: ____ NULL.",
+    "correct_sql": "SELECT order_id, status\nFROM orders\nWHERE payment_method IS NULL"
+  },
+  {
+    "id": "where-amount-between",
+    "topic": "WHERE",
+    "difficulty": "medium",
+    "prompt_text": "Show order_id and amount for orders with an amount from ₹500 to ₹1,000, both included.",
+    "concepts": ["WHERE", "BETWEEN"],
+    "structure_hint": "SELECT order_id, amount\nFROM orders\nWHERE amount ____ ____ AND ____",
+    "strong_hint": "Range check కోసం ఒక keyword ఉంది. దానితో low value, high value రెండూ include అవుతాయి. >= మరియు <= తో కూడా రాయొచ్చు.",
+    "correct_sql": "SELECT order_id, amount\nFROM orders\nWHERE amount BETWEEN 500 AND 1000"
+  },
+  {
+    "id": "where-name-starts-with-s",
+    "topic": "WHERE",
+    "difficulty": "medium",
+    "prompt_text": "Show customer_id and name of customers whose name starts with the letter 'S'.",
+    "concepts": ["WHERE", "LIKE"],
+    "structure_hint": "SELECT customer_id, name\nFROM customers\nWHERE name ____ '____'",
+    "strong_hint": "Pattern match కోసం LIKE. '%' అంటే 'ఎన్ని characters అయినా'. 'S' తో start అవ్వాలంటే % ఎక్కడ పెట్టాలి: ముందా, తర్వాతా?",
+    "correct_sql": "SELECT customer_id, name\nFROM customers\nWHERE name LIKE 'S%'"
+  },
+  {
+    "id": "where-delivered-upi-above-1000",
+    "topic": "WHERE",
+    "difficulty": "medium",
+    "prompt_text": "Show order_id, amount and payment_method for delivered orders above ₹1,000 that were paid through UPI.",
+    "concepts": ["WHERE", "AND", "Comparison operators"],
+    "structure_hint": "SELECT order_id, amount, payment_method\nFROM orders\nWHERE status = ____\n  AND payment_method = ____\n  AND amount ____ 1000",
+    "strong_hint": "మూడు conditions ఒకేసారి true కావాలి: status, payment method, amount. Text values quotes లో రాయాలి. 'Above' అంటే ఏ comparison operator?",
+    "correct_sql": "SELECT order_id, amount, payment_method\nFROM orders\nWHERE status = 'delivered'\n  AND payment_method = 'UPI'\n  AND amount > 1000"
+  },
+  {
     "id": "order-by-top-5-amount",
     "topic": "ORDER BY",
     "difficulty": "easy",
@@ -40,6 +110,46 @@
     "correct_sql": "SELECT order_id, amount\nFROM orders\nORDER BY amount DESC\nLIMIT 5"
   },
   {
+    "id": "order-by-recent-3",
+    "topic": "ORDER BY",
+    "difficulty": "easy",
+    "prompt_text": "Show order_id and order_date of the 3 most recent orders, newest first.",
+    "concepts": ["ORDER BY", "DESC", "LIMIT"],
+    "structure_hint": "SELECT order_id, order_date\nFROM orders\nORDER BY ____ ____\nLIMIT ____",
+    "strong_hint": "Newest first అంటే పెద్ద date ముందు రావాలి. 'Most recent 3' అంటే LIMIT తర్వాత ఏ number?",
+    "correct_sql": "SELECT order_id, order_date\nFROM orders\nORDER BY order_date DESC\nLIMIT 3"
+  },
+  {
+    "id": "order-by-city-then-name",
+    "topic": "ORDER BY",
+    "difficulty": "medium",
+    "prompt_text": "Show the name and city of all customers, sorted by city A–Z, and by name A–Z within the same city.",
+    "concepts": ["ORDER BY", "Multiple sort columns"],
+    "structure_hint": "SELECT name, city\nFROM customers\nORDER BY ____, ____",
+    "strong_hint": "ముందు ఏ column ప్రకారం sort చేయాలో అది first రాయాలి. Same city ఉన్నప్పుడు మాత్రమే రెండో column పనిచేస్తుంది. A–Z అంటే default order (ASC).",
+    "correct_sql": "SELECT name, city\nFROM customers\nORDER BY city, name"
+  },
+  {
+    "id": "agg-delivered-revenue",
+    "topic": "Aggregates",
+    "difficulty": "easy",
+    "prompt_text": "Find the total amount of all delivered orders. Name the column total_revenue.",
+    "concepts": ["SUM", "WHERE", "Alias"],
+    "structure_hint": "SELECT ____(amount) AS total_revenue\nFROM orders\nWHERE status = ____",
+    "strong_hint": "అన్ని amounts ని కలపడానికి aggregate function SUM. Delivered orders మాత్రమే కావాలి కాబట్టి WHERE లో status ని text value తో compare చేయండి.",
+    "correct_sql": "SELECT SUM(amount) AS total_revenue\nFROM orders\nWHERE status = 'delivered'"
+  },
+  {
+    "id": "agg-order-stats",
+    "topic": "Aggregates",
+    "difficulty": "medium",
+    "prompt_text": "For all orders together, show the number of orders as order_count, the highest amount as max_amount, and the average amount rounded to 2 decimals as avg_amount.",
+    "concepts": ["COUNT", "MAX", "AVG", "ROUND"],
+    "structure_hint": "SELECT ____(*) AS order_count,\n       ____(amount) AS max_amount,\n       ROUND(____(amount), 2) AS avg_amount\nFROM orders",
+    "strong_hint": "మూడు aggregate functions కావాలి: rows లెక్కపెట్టడానికి ఒకటి, అత్యధిక value కి ఒకటి, average కి ఒకటి. Average ని ROUND(..., 2) లో పెట్టండి.",
+    "correct_sql": "SELECT COUNT(*) AS order_count,\n       MAX(amount) AS max_amount,\n       ROUND(AVG(amount), 2) AS avg_amount\nFROM orders"
+  },
+  {
     "id": "group-by-city-order-count",
     "topic": "GROUP BY",
     "difficulty": "medium",
@@ -48,5 +158,45 @@
     "structure_hint": "SELECT city, ____(*) AS total_orders\nFROM orders\nGROUP BY ____",
     "strong_hint": "Rows ని count చేసే aggregate function COUNT.\nCity-wise result కావాలంటే GROUP BY తర్వాత ఏ column రావాలి?",
     "correct_sql": "SELECT city, COUNT(*) AS total_orders\nFROM orders\nGROUP BY city"
+  },
+  {
+    "id": "group-by-status-total",
+    "topic": "GROUP BY",
+    "difficulty": "medium",
+    "prompt_text": "For each order status, show the status and the total amount as total_amount.",
+    "concepts": ["SUM", "GROUP BY", "Alias"],
+    "structure_hint": "SELECT status, ____(amount) AS total_amount\nFROM orders\nGROUP BY ____",
+    "strong_hint": "ప్రతి status కి ఒక row కావాలి. అంటే ఏ column మీద group చేయాలి? Amounts ని కలపడానికి SUM.",
+    "correct_sql": "SELECT status, SUM(amount) AS total_amount\nFROM orders\nGROUP BY status"
+  },
+  {
+    "id": "group-by-payment-method-ranked",
+    "topic": "GROUP BY",
+    "difficulty": "hard",
+    "prompt_text": "For each payment method, show payment_method and the number of orders as order_count. Skip orders with no payment method. Show the most-used method first; when two methods have the same count, sort them A–Z by payment_method.",
+    "concepts": ["IS NOT NULL", "GROUP BY", "COUNT", "ORDER BY"],
+    "structure_hint": "SELECT payment_method, ____(*) AS order_count\nFROM orders\nWHERE payment_method ____\nGROUP BY ____\nORDER BY ____ ____, ____",
+    "strong_hint": "1) Payment method లేని rows ని group చేయక ముందే తీసేయాలి: ఏ clause లో, ఏ NULL check తో?\n2) Group చేసి count చేయండి.\n3) Sorting లో రెండు keys: మొదట count (పెద్దది ముందు), తర్వాత payment_method.",
+    "correct_sql": "SELECT payment_method, COUNT(*) AS order_count\nFROM orders\nWHERE payment_method IS NOT NULL\nGROUP BY payment_method\nORDER BY order_count DESC, payment_method"
+  },
+  {
+    "id": "having-cities-more-than-2-orders",
+    "topic": "HAVING",
+    "difficulty": "medium",
+    "prompt_text": "Show each city that has more than 2 orders, with the city and its number of orders as order_count.",
+    "concepts": ["GROUP BY", "HAVING", "COUNT"],
+    "structure_hint": "SELECT city, COUNT(*) AS order_count\nFROM orders\nGROUP BY city\n____ COUNT(*) ____ 2",
+    "strong_hint": "Groups తయారైన తర్వాత filter చేయాలంటే WHERE పనిచేయదు. GROUP BY తర్వాత వచ్చే filter clause ఏది? 'More than 2' అంటే ఏ operator?",
+    "correct_sql": "SELECT city, COUNT(*) AS order_count\nFROM orders\nGROUP BY city\nHAVING COUNT(*) > 2"
+  },
+  {
+    "id": "having-big-spenders",
+    "topic": "HAVING",
+    "difficulty": "hard",
+    "prompt_text": "Show customer_id and their total delivered amount as total_spent, only for customers whose delivered orders add up to more than ₹5,000.",
+    "concepts": ["WHERE", "GROUP BY", "HAVING", "SUM"],
+    "structure_hint": "SELECT customer_id, ____(amount) AS total_spent\nFROM orders\nWHERE ____\nGROUP BY ____\nHAVING ____",
+    "strong_hint": "ఇక్కడ రెండు filters ఉన్నాయి: delivered orders మాత్రమే (ఇది ఒక్కో row మీద, groups కి ముందే), మరియు total 5000 కంటే ఎక్కువ (ఇది group మీద, groups తర్వాతే). ఏది WHERE లో, ఏది HAVING లో?",
+    "correct_sql": "SELECT customer_id, SUM(amount) AS total_spent\nFROM orders\nWHERE status = 'delivered'\nGROUP BY customer_id\nHAVING SUM(amount) > 5000"
   }
 ]

@@ -1,28 +1,36 @@
+import json
+
 import pytest
 
+from app.config import Settings
+from app.learning_engine.tutor import CURRICULUM
+
 from .helpers import event, start
+
+BANK = json.loads(Settings().questions_path.read_text(encoding="utf-8"))
 
 
 def test_questions_never_expose_solution_or_hints(client):
     r = client.get("/questions")
     assert r.status_code == 200
     body = r.json()
-    assert len(body) == 5
+    assert len(body) == len(BANK)
     for q in body:
         assert set(q) == {"id", "topic", "difficulty", "prompt_text"}
 
 
 def test_questions_come_in_curriculum_order(client):
     topics = [q["topic"] for q in client.get("/questions").json()]
-    assert list(dict.fromkeys(topics)) == ["SELECT", "WHERE", "ORDER BY", "GROUP BY"]
+    assert list(dict.fromkeys(topics)) == CURRICULUM
 
 
 @pytest.mark.parametrize(
     ("solved", "expected_next"),
     [
         ("where-cancelled-orders", "where-delivered-orders"),  # same topic first
-        ("select-customer-name-city", "where-cancelled-orders"),  # then same level, onward
-        ("group-by-city-order-count", "order-by-top-5-amount"),  # last topic: nearest other
+        ("select-customer-name-city", "select-distinct-order-cities"),  # same topic, same level
+        ("group-by-city-order-count", "group-by-status-total"),
+        ("having-big-spenders", "having-cities-more-than-2-orders"),  # same topic beats level
     ],
 )
 def test_similar_question_stays_at_the_learners_level(client, solved, expected_next):

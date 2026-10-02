@@ -94,5 +94,28 @@
 
 M1–M5 are built. Before calling v0.1 done:
 - [ ] **Needs the OpenRouter key:** review AI-written Telugu-English across all teaching states and Explain Error, and tune the prompt
-- [ ] Grow the question bank to 10–15 (PROJECT_PLAN target; currently 5)
+- [x] Grow the question bank (2026-10-02): **20 questions, 6 topics**, easy → hard (details below)
 - [ ] Walk the 12-step loop on 3 questions with a real learner
+
+### Question bank (2026-10-02)
+
+| Topic | Questions | Covers |
+|---|---|---|
+| SELECT | 3 | columns, DISTINCT, calculated column + alias (GST) |
+| WHERE | 7 | `=`, IN, IS NULL, BETWEEN, LIKE, AND with 3 conditions |
+| ORDER BY | 3 | DESC + LIMIT, dates, two sort columns |
+| Aggregates (new) | 2 | SUM, COUNT/MAX/ROUND(AVG) |
+| GROUP BY | 3 | COUNT, SUM, WHERE + GROUP BY + 2-key ORDER BY (hard) |
+| HAVING (new) | 2 | HAVING, WHERE vs HAVING together (hard) |
+
+- [x] `backend/tests/test_question_bank.py`, the quality bar every question must pass: unique ids, every output column named in the prompt, no ties in sorted results, hints never contain the answer, ≥2 questions per topic, all three levels present
+- [x] 14 alternative correct answers verified as accepted (`>= AND <=` for BETWEEN, `HAVING alias`, `ORDER BY 2`, `amount + amount * 0.18` …)
+- [x] 12 common mistakes verified to get specific feedback without the answer (IN with OR, `= NULL`, unquoted 'UPI', WHERE instead of HAVING …)
+- [x] Quality bar checked against 3 deliberately broken banks (a tie, an unnamed column, a leaking hint): each was caught by the right test
+- [x] Fixes found along the way:
+  - Leak guard: answer lines now match without their leading `AND`/`OR` or trailing comma (`payment_method = 'UPI'` would have slipped through)
+  - Weak/strong topics now judge performance on the questions tried, not coverage (solving 1 of 7 WHERE questions perfectly was being flagged "weak")
+  - Curriculum sorts easy → medium → hard (medium and hard were treated as equal)
+- [x] 929 tests (parametrized over all 20 questions)
+
+**Known limits:** all questions use the same two tables (customers, orders); JOIN questions need a products/payments table (Phase 5). SQLite rules only.

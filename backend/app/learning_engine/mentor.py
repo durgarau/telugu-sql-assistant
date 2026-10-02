@@ -10,6 +10,8 @@ CLAUSE_MEANINGS = {
     "SELECT": "Output లో ఏ columns రావాలో చెబుతుంది.",
     "FROM": "ఏ table నుంచి data తీసుకోవాలో చెబుతుంది.",
     "WHERE": "Conditions ప్రకారం rows ని filter చేస్తుంది.",
+    "AND": "ఇంకో condition కలుపుతుంది. రెండూ true అయిన rows మాత్రమే వస్తాయి.",
+    "OR": "ఇంకో condition కలుపుతుంది. ఏదో ఒకటి true అయినా row వస్తుంది.",
     "GROUP BY": "ఒకే value ఉన్న rows ని ఒక group గా కలుపుతుంది.",
     "HAVING": "Groups ని filter చేస్తుంది (aggregate తర్వాత).",
     "ORDER BY": "Result ని sort చేస్తుంది.",

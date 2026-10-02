@@ -18,6 +18,7 @@ from .tutor import curriculum_order
 
 _RANK = {Outcome.INDEPENDENT: 3, Outcome.WITH_HINTS: 2, Outcome.NEEDED_SOLUTION: 1}
 WEAK_BELOW_PERCENT = 50
+STRONG_MIN_SOLVED = 2
 
 
 @dataclass
@@ -57,17 +58,24 @@ class LearnerProgress:
             return None
         return round(100 * self.correct_submissions / self.submissions)
 
+    # Weak/strong judge performance on questions actually tried, not coverage:
+    # solving 1 of 7 WHERE questions perfectly is not a weakness.
     @property
     def weak_topics(self) -> list[str]:
         return [
             t.topic
             for t in self.topics
-            if t.attempted and (t.needed_solution or t.mastery_percent < WEAK_BELOW_PERCENT)
+            if t.attempted
+            and (t.needed_solution or 100 * t.solved / t.attempted < WEAK_BELOW_PERCENT)
         ]
 
     @property
     def strong_topics(self) -> list[str]:
-        return [t.topic for t in self.topics if t.mastery_percent == 100]
+        return [
+            t.topic
+            for t in self.topics
+            if t.solved >= STRONG_MIN_SOLVED and t.solved == t.attempted
+        ]
 
 
 def _outcome(a: Attempt) -> Outcome | None:

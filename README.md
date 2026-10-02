@@ -4,7 +4,7 @@
 
 SQL Mitra is an SQL mentor for Telugu-speaking learners. It teaches in natural Telugu-English and guides learners to the answer instead of handing it over. It is a product of Automation Lifestyle Hub.
 
-**Status:** v0.1 in progress. Built: guided learning engine (M1), AI mentor through OpenRouter (M2), sandboxed SQL evaluation (M3), Streamlit learner UI (M4), Explain Error and progress (M5). Remaining before v0.1: AI quality review (needs an API key), a larger question bank, and testing with real learners. See [TASKS.md](TASKS.md).
+**Status:** v0.1 in progress. Built: guided learning engine (M1), AI mentor through OpenRouter (M2), sandboxed SQL evaluation (M3), Streamlit learner UI (M4), Explain Error and progress (M5). Question bank: 20 questions across 6 topics. Remaining before v0.1: AI quality review (needs an API key) and testing with real learners. See [TASKS.md](TASKS.md).
 
 ## AI provider setup
 

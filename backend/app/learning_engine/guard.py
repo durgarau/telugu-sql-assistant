@@ -37,9 +37,17 @@ def rewrites_query(text: str, learner_sql: Iterable[str] = ()) -> bool:
     return False
 
 
+_CONNECTOR = re.compile(r"^(?:and|or)\s+")
+
+
 def hidden_lines(correct_sql: str, structure_hint: str) -> list[str]:
     shown = normalize_sql(structure_hint)
-    lines = (normalize_sql(line) for line in correct_sql.splitlines() if line.strip())
+    # "AND x = 1" and "MAX(a) AS m," leak just as much without the AND or the comma.
+    lines = (
+        _CONNECTOR.sub("", normalize_sql(line)).rstrip(",").strip()
+        for line in correct_sql.splitlines()
+        if line.strip()
+    )
     # FROM <table> usually just repeats the table named in the question.
     return [line for line in lines if line not in shown and not line.startswith("from ")]
 

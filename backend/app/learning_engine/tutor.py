@@ -16,7 +16,8 @@ from .states import Event, State
 log = logging.getLogger(__name__)
 
 HISTORY_TURNS = 3
-CURRICULUM = ["SELECT", "WHERE", "ORDER BY", "GROUP BY"]
+CURRICULUM = ["SELECT", "WHERE", "ORDER BY", "Aggregates", "GROUP BY", "HAVING"]
+DIFFICULTY_ORDER = {"easy": 0, "medium": 1, "hard": 2}
 SOURCE_AI = "ai"
 SOURCE_CANNED = "canned"
 SOURCE_FALLBACK = "fallback"
@@ -99,7 +100,9 @@ def topic_rank(topic: str) -> int:
 
 
 def curriculum_order(questions: list[Question]) -> list[Question]:
-    return sorted(questions, key=lambda q: (topic_rank(q.topic), q.difficulty != "easy", q.id))
+    return sorted(
+        questions, key=lambda q: (topic_rank(q.topic), DIFFICULTY_ORDER.get(q.difficulty, 3), q.id)
+    )
 
 
 def _suggest_next(db: Session, q: Question) -> str | None:
