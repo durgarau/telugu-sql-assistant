@@ -1,0 +1,18 @@
+[project]
+name = "sql-mitra"
+version = "0.1.0"
+description = "Telugu-English SQL learning assistant that teaches instead of answering"
+requires-python = ">=3.11"
+
+[tool.pytest.ini_options]
+pythonpath = ["backend"]
+testpaths = ["backend/tests"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+src = ["backend"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
+ignore = ["B008"]

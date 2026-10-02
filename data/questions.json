@@ -1,0 +1,52 @@
+[
+  {
+    "id": "select-customer-name-city",
+    "topic": "SELECT",
+    "difficulty": "easy",
+    "prompt_text": "Show the name and city of every customer from the customers table.",
+    "concepts": ["SELECT", "FROM"],
+    "structure_hint": "SELECT ____, ____\nFROM ____",
+    "strong_hint": "Columns ని comma తో వేరు చేయాలి: SELECT name, ____\nTable పేరు customers.",
+    "correct_sql": "SELECT name, city\nFROM customers"
+  },
+  {
+    "id": "where-cancelled-orders",
+    "topic": "WHERE",
+    "difficulty": "easy",
+    "prompt_text": "Show all columns for orders whose status is 'cancelled'.",
+    "concepts": ["SELECT", "FROM", "WHERE"],
+    "structure_hint": "SELECT *\nFROM ____\nWHERE status = ____",
+    "strong_hint": "Text values ఎప్పుడూ single quotes లో ఉండాలి.\nWHERE status = '________'\nఇక్కడ ఏ word రావాలో question లో చూడండి.",
+    "correct_sql": "SELECT *\nFROM orders\nWHERE status = 'cancelled'"
+  },
+  {
+    "id": "where-delivered-orders",
+    "topic": "WHERE",
+    "difficulty": "easy",
+    "prompt_text": "Show order_id and amount for orders whose status is 'delivered'.",
+    "concepts": ["SELECT", "FROM", "WHERE"],
+    "structure_hint": "SELECT ____, ____\nFROM orders\nWHERE ____ = ____",
+    "strong_hint": "Filter column status. Value text కాబట్టి quotes లో రాయాలి: '________'",
+    "correct_sql": "SELECT order_id, amount\nFROM orders\nWHERE status = 'delivered'"
+  },
+  {
+    "id": "order-by-top-5-amount",
+    "topic": "ORDER BY",
+    "difficulty": "easy",
+    "prompt_text": "Show order_id and amount of the 5 orders with the highest amount.",
+    "concepts": ["SELECT", "ORDER BY", "LIMIT"],
+    "structure_hint": "SELECT order_id, amount\nFROM orders\nORDER BY ____ ____\nLIMIT ____",
+    "strong_hint": "అత్యధికం ముందు రావాలంటే sorting direction DESC.\nTop 5 అంటే LIMIT తర్వాత ఏ number రావాలి?",
+    "correct_sql": "SELECT order_id, amount\nFROM orders\nORDER BY amount DESC\nLIMIT 5"
+  },
+  {
+    "id": "group-by-city-order-count",
+    "topic": "GROUP BY",
+    "difficulty": "medium",
+    "prompt_text": "For each city, show the city and the total number of orders as total_orders.",
+    "concepts": ["SELECT", "COUNT", "GROUP BY", "Alias"],
+    "structure_hint": "SELECT city, ____(*) AS total_orders\nFROM orders\nGROUP BY ____",
+    "strong_hint": "Rows ని count చేసే aggregate function COUNT.\nCity-wise result కావాలంటే GROUP BY తర్వాత ఏ column రావాలి?",
+    "correct_sql": "SELECT city, COUNT(*) AS total_orders\nFROM orders\nGROUP BY city"
+  }
+]
