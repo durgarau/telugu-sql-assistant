@@ -70,16 +70,43 @@ def _connect() -> sqlite3.Connection:
     return conn
 
 
+@dataclass(frozen=True)
+class TableInfo:
+    name: str
+    columns: list[tuple[str, str]]  # (name, type)
+    sample_rows: list[tuple]
+    row_count: int
+
+
 @cache
-def schema_columns() -> frozenset[str]:
+def practice_tables(sample_size: int = 3) -> tuple[TableInfo, ...]:
     conn = sqlite3.connect(":memory:")
     try:
         conn.executescript(_script())
-        tables = [r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")]
-        cols = {c[1].lower() for t in tables for c in conn.execute(f"PRAGMA table_info({t})")}
-        return frozenset(cols) | frozenset(t.lower() for t in tables)
+        names = [
+            r[0]
+            for r in conn.execute(
+                "SELECT name FROM sqlite_master WHERE type='table' ORDER BY rowid"
+            )
+        ]
+        return tuple(
+            TableInfo(
+                name=t,
+                columns=[(c[1], c[2]) for c in conn.execute(f"PRAGMA table_info({t})")],
+                sample_rows=conn.execute(f"SELECT * FROM {t} LIMIT ?", (sample_size,)).fetchall(),
+                row_count=conn.execute(f"SELECT COUNT(*) FROM {t}").fetchone()[0],
+            )
+            for t in names
+        )
     finally:
         conn.close()
+
+
+@cache
+def schema_columns() -> frozenset[str]:
+    tables = practice_tables()
+    cols = {name.lower() for t in tables for name, _ in t.columns}
+    return frozenset(cols) | frozenset(t.name.lower() for t in tables)
 
 
 def run_query(

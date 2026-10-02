@@ -4,7 +4,7 @@
 
 SQL Mitra is an SQL mentor for Telugu-speaking learners. It teaches in natural Telugu-English and guides learners to the answer instead of handing it over. It is a product of Automation Lifestyle Hub.
 
-**Status:** v0.1 in progress. M1 (learning engine), M2 (AI mentor through OpenRouter) and M3 (sandboxed SQL evaluation) are built. There is no UI yet.
+**Status:** v0.1 in progress. The learning engine (M1), AI mentor through OpenRouter (M2), sandboxed SQL evaluation (M3) and the Streamlit learner UI (M4) are built. Next: "Explain Error" and a basic progress view (M5).
 
 ## AI provider setup
 
@@ -22,10 +22,21 @@ Requires Python 3.11 or later.
 python -m venv .venv
 .venv/Scripts/python -m pip install -r requirements-dev.txt   # Windows; use .venv/bin on macOS/Linux
 cp .env.example .env
+```
+
+Start the API and the UI in two terminals, both from the project root:
+
+```bash
 .venv/Scripts/python -m uvicorn app.main:app --app-dir backend --port 8780
 ```
 
-The API docs are at http://localhost:8780/docs.
+```bash
+.venv/Scripts/python -m streamlit run frontend/streamlit_app.py --server.port 8781
+```
+
+Open http://localhost:8781 to learn. API docs are at http://localhost:8780/docs. To point the UI at a different API, set `SQL_MITRA_API_URL`. Run Streamlit from the project root so it picks up the navy/gold theme in `.streamlit/config.toml`.
+
+After a change to the database models, delete `sql_mitra.db` (there are no migrations yet).
 
 ## Test
 

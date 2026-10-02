@@ -6,9 +6,18 @@ from sqlalchemy.orm import Session
 
 from app.database.models import Attempt, Question
 from app.learning_engine import machine, tutor
-from app.sql_engine import evaluator
+from app.sql_engine import evaluator, sandbox
 
-from .schemas import ErrorOut, EvaluationOut, EventIn, QuestionOut, StartAttemptIn, TurnOut
+from .schemas import (
+    ColumnOut,
+    ErrorOut,
+    EvaluationOut,
+    EventIn,
+    QuestionOut,
+    StartAttemptIn,
+    TableOut,
+    TurnOut,
+)
 
 router = APIRouter()
 
@@ -54,9 +63,22 @@ def health() -> dict[str, str]:
     return {"status": "ok"}
 
 
+@router.get("/practice/schema", response_model=list[TableOut])
+def practice_schema() -> list[TableOut]:
+    return [
+        TableOut(
+            name=t.name,
+            columns=[ColumnOut(name=n, type=ty) for n, ty in t.columns],
+            sample_rows=[list(r) for r in t.sample_rows],
+            row_count=t.row_count,
+        )
+        for t in sandbox.practice_tables()
+    ]
+
+
 @router.get("/questions", response_model=list[QuestionOut])
 def list_questions(db: Session = Depends(get_db)) -> list[Question]:
-    return list(db.scalars(select(Question).order_by(Question.topic, Question.id)))
+    return tutor.curriculum_order(list(db.scalars(select(Question))))
 
 
 @router.get("/questions/{question_id}", response_model=QuestionOut)

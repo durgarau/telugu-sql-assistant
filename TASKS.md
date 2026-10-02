@@ -49,10 +49,30 @@
 - No schema migrations: delete `sql_mitra.db` after model changes. Add Alembic before any shared deployment.
 - No pytest-timeout, so a sandbox regression on timeouts would hang CI rather than fail it.
 
-## M4: Streamlit UI (next)
+## M4: Streamlit UI ✅ (2026-10-02)
 
-- [ ] Topic and question picker
-- [ ] Question panel, SQL editor, mentor panel; buttons driven by `allowed_events`
-- [ ] Show the learner's result rows and the database error
-- [ ] Confirm dialog for an early "Show solution"
-- [ ] Walk the 12-step success criteria in a browser
+- [x] `frontend/streamlit_app.py` + `frontend/api_client.py`; all teaching logic stays in the API
+- [x] Sidebar topic and question picker, in curriculum order from the API
+- [x] Question card with hint count, wrong-attempt count and stage
+- [x] SQL editor, Check Query, verdict, database error and the learner's own result table
+- [x] Practice-tables panel (`GET /practice/schema`: columns, types, 3 sample rows)
+- [x] Mentor panel: Explain / Hint / Solution while working; Line-by-line / Similar question when finished; "next question" button
+- [x] Early "Solution" shows the server's Telugu nudge with "try a hint first" or "show anyway"
+- [x] Hint stays clickable while working, so the server can explain when a hint isn't available yet
+- [x] "Similar question" stays at the learner's level: same topic, then same difficulty, then the nearest topic (it was jumping beginners to the Intermediate GROUP BY question)
+- [x] Navy/gold ALH theme; emoji avatars (the default avatar was orange)
+- [x] 12 AppTest UI tests that drive the real UI against the real backend in-process; 269 tests total
+- [x] Browser walkthrough on desktop (1366×900) and mobile (375×812): full loop, no console errors
+
+**Section 28 success criteria:** steps 1–12 all work. Step 4 ("understand in Telugu-English") currently uses the canned explanation; the AI explanation needs the OpenRouter key (M2).
+
+**Known limits:**
+- On a phone the mentor panel sits below the editor and tables, so learners scroll to reach Hint/Explain; the fixed-height chat box leaves empty space early on.
+- One question per topic for SELECT/ORDER BY/GROUP BY, so "similar question" often moves to another topic. Phase 2 grows the bank.
+- Progress resets when the browser session ends (no accounts; by design for v0.1).
+
+## M5: Explain Error + basic progress (next)
+
+- [ ] "Explain Error" panel: paste a database error, get a Telugu-English explanation and a hint, not a rewritten query
+- [ ] Per-session progress view: solved independently / with hints / needed solution, from `attempt_events`
+- [ ] Phone layout: mentor actions reachable without scrolling past the tables

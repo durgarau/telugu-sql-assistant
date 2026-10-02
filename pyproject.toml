@@ -5,8 +5,8 @@ description = "Telugu-English SQL learning assistant that teaches instead of ans
 requires-python = ">=3.11"
 
 [tool.pytest.ini_options]
-pythonpath = ["backend"]
-testpaths = ["backend/tests"]
+pythonpath = ["backend", "frontend"]
+testpaths = ["backend/tests", "frontend/tests"]
 
 [tool.ruff]
 line-length = 100

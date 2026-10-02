@@ -1,7 +1,7 @@
 # Architecture (v0.1)
 
 ```
-Frontend (Streamlit, M4)
+Frontend: Streamlit (frontend/streamlit_app.py → api_client.py)
         │ HTTP/JSON
 FastAPI backend
   ├── api/              routes + request/response schemas (input validation)
@@ -50,7 +50,8 @@ The sandbox is the security boundary. sqlglot is only there for friendly message
 | Method | Path | Notes |
 |---|---|---|
 | GET | `/health` | |
-| GET | `/questions`, `/questions/{id}` | No solutions or hints |
+| GET | `/questions`, `/questions/{id}` | No solutions or hints; list is in curriculum order |
+| GET | `/practice/schema` | Practice tables: columns, types, row count, 3 sample rows |
 | POST | `/attempts` | `{learner_id, question_id}` → starts at QUESTION_RECEIVED |
 | GET | `/attempts/{id}` | Resume: current state + last mentor message |
 | POST | `/attempts/{id}/events` | `{event, sql?, confirmed?}` → `409 {code, message}` for transitions that are not allowed |

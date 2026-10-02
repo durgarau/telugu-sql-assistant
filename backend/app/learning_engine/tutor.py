@@ -16,6 +16,7 @@ from .states import Event, State
 log = logging.getLogger(__name__)
 
 HISTORY_TURNS = 3
+CURRICULUM = ["SELECT", "WHERE", "ORDER BY", "GROUP BY"]
 SOURCE_AI = "ai"
 SOURCE_CANNED = "canned"
 SOURCE_FALLBACK = "fallback"
@@ -93,15 +94,30 @@ def message_for(
     return text, SOURCE_CANNED
 
 
+def topic_rank(topic: str) -> int:
+    return CURRICULUM.index(topic) if topic in CURRICULUM else len(CURRICULUM)
+
+
+def curriculum_order(questions: list[Question]) -> list[Question]:
+    return sorted(questions, key=lambda q: (topic_rank(q.topic), q.difficulty != "easy", q.id))
+
+
 def _suggest_next(db: Session, q: Question) -> str | None:
-    same_topic = db.scalar(
-        select(Question.id)
-        .where(Question.topic == q.topic, Question.id != q.id)
-        .order_by(Question.id)
+    """Same topic first, then same difficulty, then onward through the curriculum."""
+    here = topic_rank(q.topic)
+    candidates = db.scalars(select(Question).where(Question.id != q.id)).all()
+    best = min(
+        candidates,
+        key=lambda c: (
+            c.topic != q.topic,
+            c.difficulty != q.difficulty,
+            topic_rank(c.topic) < here,
+            abs(topic_rank(c.topic) - here),
+            c.id,
+        ),
+        default=None,
     )
-    return same_topic or db.scalar(
-        select(Question.id).where(Question.id != q.id).order_by(Question.id)
-    )
+    return best.id if best else None
 
 
 def start_attempt(db: Session, learner_id: str, question: Question) -> Turn:

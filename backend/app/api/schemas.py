@@ -59,6 +59,18 @@ class EvaluationOut(BaseModel):
     truncated: bool = False
 
 
+class ColumnOut(BaseModel):
+    name: str
+    type: str
+
+
+class TableOut(BaseModel):
+    name: str
+    columns: list[ColumnOut]
+    sample_rows: list[list[Any]]
+    row_count: int
+
+
 class ErrorOut(BaseModel):
     code: str
     message: str
