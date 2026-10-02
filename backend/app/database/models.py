@@ -61,6 +61,7 @@ class AttemptEvent(Base):
     submitted_sql: Mapped[str | None] = mapped_column(Text)
     is_correct: Mapped[bool | None]
     mentor_message: Mapped[str] = mapped_column(Text)
+    mentor_source: Mapped[str] = mapped_column(String(10), default="canned")
     created_at: Mapped[datetime] = mapped_column(default=_now)
 
     attempt: Mapped[Attempt] = relationship(back_populates="events")

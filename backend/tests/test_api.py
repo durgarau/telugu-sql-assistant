@@ -1,25 +1,4 @@
-import pytest
-from fastapi.testclient import TestClient
-
-from app.config import Settings
-from app.main import create_app
-
-
-@pytest.fixture
-def client():
-    app = create_app(Settings(database_url="sqlite:///:memory:"))
-    with TestClient(app) as c:
-        yield c
-
-
-def start(client, qid="where-cancelled-orders"):
-    r = client.post("/attempts", json={"learner_id": "test-learner", "question_id": qid})
-    assert r.status_code == 201, r.text
-    return r.json()
-
-
-def event(client, attempt_id, name, **extra):
-    return client.post(f"/attempts/{attempt_id}/events", json={"event": name, **extra})
+from .helpers import event, start
 
 
 def test_questions_never_expose_solution_or_hints(client):

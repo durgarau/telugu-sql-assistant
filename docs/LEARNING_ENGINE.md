@@ -47,7 +47,7 @@ The rule is enforced in four layers. No single layer depends on the LLM behaving
 1. **Only an explicit `REQUEST_SOLUTION` event reaches FINAL_SOLUTION.** The engine never moves there because of a free-text message or an LLM decision.
 2. **Friction before zero-effort reveals.** If the learner has used no hint and made no attempt, `REQUEST_SOLUTION` returns `409 confirm_required` with a nudge to try a hint first. The client must resend with `confirmed: true`. Every reveal is recorded as `outcome = needed_solution`.
 3. **The strong hint is earned.** It needs at least one failed attempt, so a learner cannot click through to a near-answer without writing any SQL.
-4. **Runtime leak guard.** In any non-reveal state, a mentor message containing the normalized `correct_sql` is replaced with a safe fallback and a warning is logged. This matters most once an LLM writes the hints.
+4. **Runtime leak guard.** In any non-reveal state, a mentor message is blocked if it contains the normalized `correct_sql` or any hidden answer line (a line not already shown in the skeleton). A blocked AI reply is replaced with the canned message and a warning is logged. See [PROMPT_DESIGN.md](PROMPT_DESIGN.md).
 
 The public API never returns `correct_sql` or the hint fields. They only leave the server through the tutor, in a reveal state.
 

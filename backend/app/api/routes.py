@@ -65,7 +65,7 @@ def get_attempt(attempt_id: str, db: Session = Depends(get_db)) -> TurnOut:
     if a is None:
         raise HTTPException(404, "attempt not found")
     p = tutor.progress_of(a)
-    last = a.events[-1].mentor_message if a.events else tutor.message_for(p, a.question)
+    last = a.events[-1].mentor_message if a.events else tutor.message_for(p, a.question)[0]
     return _turn_out(tutor.Turn(a, p, last))
 
 
@@ -74,12 +74,21 @@ def get_attempt(attempt_id: str, db: Session = Depends(get_db)) -> TurnOut:
     response_model=TurnOut,
     responses={409: {"model": ErrorOut}, 422: {"model": ErrorOut}},
 )
-def post_event(attempt_id: str, body: EventIn, db: Session = Depends(get_db)) -> TurnOut:
+def post_event(
+    attempt_id: str, body: EventIn, request: Request, db: Session = Depends(get_db)
+) -> TurnOut:
     a = db.get(Attempt, attempt_id)
     if a is None:
         raise HTTPException(404, "attempt not found")
     try:
-        turn = tutor.handle_event(db, a, body.event, sql=body.sql, confirmed=body.confirmed)
+        turn = tutor.handle_event(
+            db,
+            a,
+            body.event,
+            sql=body.sql,
+            confirmed=body.confirmed,
+            provider=request.app.state.ai_provider,
+        )
     except machine.TransitionError as e:
         status = 422 if e.code == "sql_required" else 409
         raise HTTPException(status, {"code": e.code, "message": e.message}) from e
