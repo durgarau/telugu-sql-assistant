@@ -52,3 +52,7 @@ After a change to the database models, delete `sql_mitra.db` (there are no migra
 - [docs/LEARNING_ENGINE.md](docs/LEARNING_ENGINE.md)
 - [docs/ROADMAP.md](docs/ROADMAP.md)
 - [TASKS.md](TASKS.md)
+
+## License
+
+[MIT](LICENSE). Copyright (c) 2026 Durga Rao Bandaru.
