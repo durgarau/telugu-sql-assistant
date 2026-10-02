@@ -1,7 +1,9 @@
+from typing import Any
+
 from pydantic import BaseModel, Field, model_validator
 
 from app.learning_engine.states import Event, Outcome, State
-from app.sql_engine.evaluator import MAX_SQL_LENGTH
+from app.sql_engine.evaluator import MAX_SQL_LENGTH, Verdict
 
 
 class QuestionOut(BaseModel):
@@ -41,6 +43,20 @@ class TurnOut(BaseModel):
     solution_needs_confirmation: bool
     mentor_message: str
     suggested_question_id: str | None = None
+    evaluation: "EvaluationOut | None" = None
+
+
+class EvaluationOut(BaseModel):
+    """The learner's own result, so they can see what their query returned.
+    The expected result is never sent: that would give the answer away."""
+
+    verdict: Verdict
+    mistakes: list[str]
+    error: str | None
+    columns: list[str] = []
+    rows: list[list[Any]] = []
+    total_rows_shown: int = 0
+    truncated: bool = False
 
 
 class ErrorOut(BaseModel):

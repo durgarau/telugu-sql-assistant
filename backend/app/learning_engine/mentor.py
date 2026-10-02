@@ -39,7 +39,7 @@ def _explain_lines(sql: str) -> str:
     return "\n".join(out)
 
 
-def compose(p: Progress, q: QuestionContent) -> str:
+def compose(p: Progress, q: QuestionContent, *, facts: tuple[str, ...] = ()) -> str:
     s = p.state
     if s is State.QUESTION_RECEIVED:
         return (
@@ -69,12 +69,18 @@ def compose(p: Progress, q: QuestionContent) -> str:
             "ప్రతి ____ దగ్గర ఏం రావాలో ఆలోచించి try చేయండి."
         )
     if s is State.ERROR_ANALYSIS:
+        if facts:
+            checks = "Checker ఏం కనుక్కుందంటే:\n" + "\n".join(f"- {f}" for f in facts)
+        else:
+            checks = (
+                "మీ query ని question తో మళ్ళీ compare చేయండి:\n"
+                "- Columns సరిగ్గా ఉన్నాయా?\n"
+                "- Filter condition సరిగ్గా ఉందా?\n"
+                "- Text values కి quotes పెట్టారా?"
+            )
         return (
             "ఇంకా correct కాలేదు. పర్వాలేదు, ఇది learning లో భాగమే.\n\n"
-            "మీ query ని question తో మళ్ళీ compare చేయండి:\n"
-            "- Columns సరిగ్గా ఉన్నాయా?\n"
-            "- Filter condition సరిగ్గా ఉందా?\n"
-            "- Text values కి quotes పెట్టారా?\n\n"
+            f"{checks}\n\n"
             f"Attempt {p.failed_attempts} అయింది. మళ్ళీ try చేయండి."
         )
     if s is State.STRONG_HINT:

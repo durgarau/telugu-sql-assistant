@@ -60,6 +60,8 @@ class AttemptEvent(Base):
     to_state: Mapped[str] = mapped_column(String(32))
     submitted_sql: Mapped[str | None] = mapped_column(Text)
     is_correct: Mapped[bool | None]
+    verdict: Mapped[str | None] = mapped_column(String(20))
+    mistake_tags: Mapped[list[str] | None] = mapped_column(JSON)
     mentor_message: Mapped[str] = mapped_column(Text)
     mentor_source: Mapped[str] = mapped_column(String(10), default="canned")
     created_at: Mapped[datetime] = mapped_column(default=_now)

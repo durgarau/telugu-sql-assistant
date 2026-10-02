@@ -27,6 +27,7 @@ class Turn:
     progress: Progress
     mentor_message: str
     suggested_question_id: str | None = None
+    evaluation: evaluator.Evaluation | None = None
 
 
 def progress_of(a: Attempt) -> Progress:
@@ -50,34 +51,43 @@ def _content(q: Question) -> mentor.QuestionContent:
     )
 
 
-def _leaks(p: Progress, q: Question, text: str) -> bool:
+@dataclass(frozen=True)
+class TurnContext:
+    student_sql: str | None = None  # the query this turn is about
+    learner_sql: tuple[str, ...] = ()  # everything the learner has typed so far
+    facts: tuple[str, ...] = ()  # verified checker findings
+    already_said: tuple[str, ...] = ()
+
+
+def _leaks(p: Progress, q: Question, text: str, ctx: TurnContext) -> bool:
     return p.state not in machine.REVEAL_STATES and leaks_solution(
-        text, q.correct_sql, q.structure_hint
+        text, q.correct_sql, q.structure_hint, ctx.learner_sql
     )
 
 
 def message_for(
     p: Progress,
     q: Question,
+    ctx: TurnContext = TurnContext(),
     *,
     provider: AIProvider | None = None,
-    student_sql: str | None = None,
-    already_said: tuple[str, ...] = (),
 ) -> tuple[str, str]:
     """Return (message, source). AI first; canned on failure or leak; never an answer."""
     if provider is not None and ai_mentor.handles(p.state):
-        m = ai_mentor.material_for(p, q, student_sql=student_sql, already_said=already_said)
+        m = ai_mentor.material_for(
+            p, q, student_sql=ctx.student_sql, facts=ctx.facts, already_said=ctx.already_said
+        )
         try:
             text = ai_mentor.generate(provider, p, m)
         except AIProviderError as e:
             log.warning("AI mentor failed (%s): question=%s state=%s", e, q.id, p.state)
         else:
-            if not _leaks(p, q, text):
+            if not _leaks(p, q, text, ctx):
                 return text, SOURCE_AI
             log.warning("AI solution leak blocked: question=%s state=%s", q.id, p.state)
 
-    text = mentor.compose(p, _content(q))
-    if _leaks(p, q, text):
+    text = mentor.compose(p, _content(q), facts=ctx.facts)
+    if _leaks(p, q, text, ctx):
         log.error("canned solution leak blocked: question=%s state=%s", q.id, p.state)
         return mentor.SAFE_FALLBACK, SOURCE_FALLBACK
     return text, SOURCE_CANNED
@@ -107,10 +117,6 @@ def start_attempt(db: Session, learner_id: str, question: Question) -> Turn:
     return Turn(attempt, p, message)
 
 
-def _last_submitted_sql(attempt: Attempt) -> str | None:
-    return next((e.submitted_sql for e in reversed(attempt.events) if e.submitted_sql), None)
-
-
 def handle_event(
     db: Session,
     attempt: Attempt,
@@ -122,22 +128,34 @@ def handle_event(
 ) -> Turn:
     q = attempt.question
     before = progress_of(attempt)
+    submitted = [e.submitted_sql for e in attempt.events if e.submitted_sql]
 
-    is_correct = None
+    evaluation: evaluator.Evaluation | None = None
     if event is Event.SUBMIT_ATTEMPT:
         if not sql or not sql.strip():
             raise machine.TransitionError("sql_required", "Submit చేయడానికి ముందు query రాయండి.")
-        is_correct = evaluator.is_correct(sql, q.correct_sql)
+        if before.state in machine.WORKING_STATES:
+            evaluation = evaluator.evaluate(sql, q.correct_sql)
+            if evaluation.verdict is evaluator.Verdict.NOT_ALLOWED:
+                raise machine.TransitionError(
+                    "query_not_allowed",
+                    "Practice లో SELECT queries మాత్రమే run చేయగలం. "
+                    "Data మార్చే commands (DROP, DELETE, UPDATE ...) ఇక్కడ allowed కాదు.",
+                )
+        submitted.append(sql)
 
+    is_correct = evaluation.is_correct if evaluation else None
+    if event is Event.SUBMIT_ATTEMPT and evaluation is None:
+        is_correct = False  # state does not accept submissions; apply() will reject it
     after = machine.apply(before, event, is_correct=is_correct, confirmed=confirmed)
-    already_said = tuple(e.mentor_message for e in attempt.events[-HISTORY_TURNS:])
-    message, source = message_for(
-        after,
-        q,
-        provider=provider,
-        student_sql=sql if event is Event.SUBMIT_ATTEMPT else _last_submitted_sql(attempt),
-        already_said=already_said,
+
+    ctx = TurnContext(
+        student_sql=submitted[-1] if submitted else None,
+        learner_sql=tuple(submitted),
+        facts=tuple(evaluation.facts) if evaluation else (),
+        already_said=tuple(e.mentor_message for e in attempt.events[-HISTORY_TURNS:]),
     )
+    message, source = message_for(after, q, ctx, provider=provider)
 
     attempt.state = after.state
     attempt.hint_level = after.hint_level
@@ -152,6 +170,8 @@ def handle_event(
             to_state=after.state,
             submitted_sql=sql if event is Event.SUBMIT_ATTEMPT else None,
             is_correct=is_correct,
+            verdict=evaluation.verdict if evaluation else None,
+            mistake_tags=evaluation.mistakes if evaluation else None,
             mentor_message=message,
             mentor_source=source,
         )
@@ -159,4 +179,4 @@ def handle_event(
     db.commit()
 
     suggested = _suggest_next(db, q) if after.state is State.SIMILAR_PRACTICE else None
-    return Turn(attempt, after, message, suggested)
+    return Turn(attempt, after, message, suggested, evaluation)

@@ -29,9 +29,30 @@
 - [ ] **Blocked on API key:** generate hints for every question × state with a real model, review the Telugu-English quality, tune the system prompt
 - [ ] Choose the production model (cost vs Telugu quality) once the review is done
 
-## M3: Real SQL evaluation (next)
+## M3: Real SQL evaluation ✅ (2026-10-02)
 
-- [ ] Seeded read-only SQLite practice DB (customers, orders with Indian cities)
-- [ ] sqlglot parse; allow only SELECT/WITH
-- [ ] Run the learner query and the reference query; compare result sets (order-sensitive only when ORDER BY matters)
-- [ ] Rule-based mistake tags (missing quotes, `= NULL`, `IN (a OR b)`, WHERE vs HAVING) passed to ERROR_ANALYSIS as facts
+- [x] Practice dataset `data/practice.sql`: 11 customers and 22 orders across 8 Indian cities, distinct amounts (no top-N ties), NULLs for later lessons
+- [x] Sandbox: fresh in-memory DB per query, SQLite authorizer (reads only), `query_only`, 2-second time limit, 1,000-row cap
+- [x] sqlglot for friendly "not allowed" messages and AST mistake detection; SQLite's own message shown for errors
+- [x] Correct = same columns and same rows as the reference (row order only matters when the reference has ORDER BY), so any equivalent query passes
+- [x] 9 mistake tags: missing quotes, `= NULL`, `IN (a OR b)`, aggregate in WHERE, missing GROUP BY, ORDER BY direction, missing ORDER BY, missing LIMIT, wrong LIMIT
+- [x] Checker facts go to the canned and AI error feedback; tested never to reveal the answer
+- [x] Learner sees their own result rows (the expected result is never sent)
+- [x] Destructive SQL rejected with 422 and does not use up an attempt
+- [x] `verdict` and `mistake_tags` stored per event (input for Phase 3 mistake memory)
+- [x] Guard no longer blocks quotes of the learner's own SQL
+- [x] 252 tests; 4 mutation checks caught (removing the time limit makes the runaway test hang rather than fail)
+
+**Known limits:**
+- SQLite rules only. Double-quoted strings (`"cancelled"`) are accepted by SQLite but are identifiers in Postgres and BigQuery; a teaching tip for this is on the backlog.
+- A case-mismatched value (`'Cancelled'`) gets correct but generic feedback ("0 rows"); no dedicated tag yet.
+- No schema migrations: delete `sql_mitra.db` after model changes. Add Alembic before any shared deployment.
+- No pytest-timeout, so a sandbox regression on timeouts would hang CI rather than fail it.
+
+## M4: Streamlit UI (next)
+
+- [ ] Topic and question picker
+- [ ] Question panel, SQL editor, mentor panel; buttons driven by `allowed_events`
+- [ ] Show the learner's result rows and the database error
+- [ ] Confirm dialog for an early "Show solution"
+- [ ] Walk the 12-step success criteria in a browser

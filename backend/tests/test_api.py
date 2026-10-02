@@ -101,10 +101,64 @@ def test_get_attempt_resumes_with_last_message(client):
     assert r.json()["mentor_message"] == hint["mentor_message"]
 
 
+def test_equivalent_query_written_differently_is_accepted(client):
+    aid = start(client, "group-by-city-order-count")["attempt_id"]
+    sql = "select o.city, count(o.order_id) as total_orders from orders o group by o.city"
+    t = event(client, aid, "SUBMIT_ATTEMPT", sql=sql).json()
+    assert t["state"] == "SOLVED"
+    assert t["outcome"] == "independent"
+    assert t["evaluation"]["verdict"] == "correct"
+    assert len(t["evaluation"]["rows"]) == 8
+
+
+def test_wrong_attempt_returns_learner_rows_and_specific_feedback(client):
+    aid = start(client)["attempt_id"]
+    t = event(client, aid, "SUBMIT_ATTEMPT", sql="SELECT * FROM orders WHERE status = cancelled")
+    body = t.json()
+    assert body["state"] == "ERROR_ANALYSIS"
+    assert body["evaluation"]["verdict"] == "runtime_error"
+    assert body["evaluation"]["mistakes"] == ["missing_quotes"]
+    assert "no such column: cancelled" in body["evaluation"]["error"]
+    assert "single quotes" in body["mentor_message"]
+
+    body = event(client, aid, "SUBMIT_ATTEMPT", sql="SELECT * FROM orders").json()
+    ev = body["evaluation"]
+    assert ev["verdict"] == "wrong_result" and ev["total_rows_shown"] == 22
+    assert ev["columns"][:2] == ["order_id", "customer_id"]
+    assert "22 row(s)" in body["mentor_message"]
+
+
+def test_destructive_sql_is_rejected_without_using_an_attempt(client):
+    aid = start(client)["attempt_id"]
+    r = event(client, aid, "SUBMIT_ATTEMPT", sql="DROP TABLE orders")
+    assert r.status_code == 422
+    assert r.json()["detail"]["code"] == "query_not_allowed"
+    t = client.get(f"/attempts/{aid}").json()
+    assert t["state"] == "QUESTION_RECEIVED" and t["failed_attempts"] == 0
+
+
+def test_mistake_tags_are_stored_for_mistake_memory(client):
+    from sqlalchemy import select
+
+    from app.database.models import AttemptEvent
+
+    aid = start(client, "order-by-top-5-amount")["attempt_id"]
+    event(
+        client,
+        aid,
+        "SUBMIT_ATTEMPT",
+        sql="SELECT order_id, amount FROM orders ORDER BY amount LIMIT 5",
+    )
+    with client.app.state.session_factory() as db:
+        row = db.scalars(select(AttemptEvent)).one()
+    assert row.verdict == "wrong_result"
+    assert row.mistake_tags == ["order_direction"]
+
+
 def test_runtime_guard_replaces_a_leaking_hint(client, monkeypatch):
     from app.learning_engine import mentor
 
-    monkeypatch.setattr(mentor, "compose", lambda p, q: f"Easy! {q.correct_sql}")
+    monkeypatch.setattr(mentor, "compose", lambda p, q, **_kw: f"Easy! {q.correct_sql}")
     aid = start(client)["attempt_id"]
     t = event(client, aid, "REQUEST_HINT").json()
     assert t["mentor_message"] == mentor.SAFE_FALLBACK

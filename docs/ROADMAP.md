@@ -6,8 +6,8 @@
 |---|---|---|
 | M1 | Learning-engine skeleton: state machine, persistence, API, canned mentor | **Done** |
 | M2 | Telugu-English mentor through OpenRouter, with prompt templates per state | Code done; live quality review needs an API key |
-| M3 | Real SQL evaluation: sqlglot parse, read-only sandbox execution, result-set comparison, rule-based mistake detection | Next |
-| M4 | Streamlit UI covering the full 12-step loop | |
+| M3 | Real SQL evaluation: sqlglot parse, read-only sandbox execution, result-set comparison, rule-based mistake detection | **Done** |
+| M4 | Streamlit UI covering the full 12-step loop | Next |
 | M5 | "Explain Error" feature and a basic progress view | |
 
 **v0.1 is done when** a learner can complete Section 28's 12-step loop on 3 questions and the engine never reveals an answer early.

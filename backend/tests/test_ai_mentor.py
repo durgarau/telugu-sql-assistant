@@ -124,6 +124,30 @@ def test_leaking_ai_reply_falls_back_to_canned(make_client, leak):
         assert db.scalars(select(AttemptEvent.mentor_source)).all() == ["canned"]
 
 
+def test_feedback_may_quote_what_the_learner_wrote(make_client):
+    reply = "మీ `GROUP BY city` correct. Alias ____ check చేయండి."
+    c = make_client(FakeProvider(reply))
+    aid = start(c, "group-by-city-order-count")["attempt_id"]
+    t = event(c, aid, "SUBMIT_ATTEMPT", sql="SELECT city, COUNT(*) FROM orders GROUP BY city")
+    assert t.json()["mentor_message"] == reply
+
+
+def test_same_clause_is_blocked_if_the_learner_never_wrote_it(make_client):
+    c = make_client(FakeProvider("Just add `GROUP BY city` and alias ____"))
+    aid = start(c, "group-by-city-order-count")["attempt_id"]
+    t = event(c, aid, "SUBMIT_ATTEMPT", sql="SELECT city, COUNT(*) FROM orders").json()
+    assert "group by city" not in t["mentor_message"].lower()
+
+
+def test_error_analysis_prompt_carries_checker_facts(make_client):
+    fake = FakeProvider("ఇంకోసారి ____")
+    c = make_client(fake)
+    aid = start(c)["attempt_id"]
+    event(c, aid, "SUBMIT_ATTEMPT", sql="SELECT * FROM orders WHERE status = cancelled")
+    prompt = _prompt_text(fake.calls[-1])
+    assert "verified" in prompt and "single quotes" in prompt
+
+
 def test_provider_failure_falls_back_to_canned(make_client):
     c = make_client(FailingProvider())
     aid = start(c)["attempt_id"]

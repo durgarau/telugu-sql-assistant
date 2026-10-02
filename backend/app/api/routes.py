@@ -6,10 +6,14 @@ from sqlalchemy.orm import Session
 
 from app.database.models import Attempt, Question
 from app.learning_engine import machine, tutor
+from app.sql_engine import evaluator
 
-from .schemas import ErrorOut, EventIn, QuestionOut, StartAttemptIn, TurnOut
+from .schemas import ErrorOut, EvaluationOut, EventIn, QuestionOut, StartAttemptIn, TurnOut
 
 router = APIRouter()
+
+PREVIEW_ROWS = 50
+VALIDATION_CODES = frozenset({"sql_required", "query_not_allowed"})
 
 
 def get_db(request: Request) -> Iterator[Session]:
@@ -30,7 +34,19 @@ def _turn_out(t: tutor.Turn) -> TurnOut:
         solution_needs_confirmation=p.solution_needs_confirmation,
         mentor_message=t.mentor_message,
         suggested_question_id=t.suggested_question_id,
+        evaluation=_evaluation_out(t.evaluation) if t.evaluation else None,
     )
+
+
+def _evaluation_out(e: evaluator.Evaluation) -> EvaluationOut:
+    out = EvaluationOut(verdict=e.verdict, mistakes=e.mistakes, error=e.error)
+    if e.result is not None:
+        rows = e.result.rows[:PREVIEW_ROWS]
+        out.columns = e.result.columns
+        out.rows = [list(r) for r in rows]
+        out.total_rows_shown = len(rows)
+        out.truncated = e.result.truncated or len(e.result.rows) > PREVIEW_ROWS
+    return out
 
 
 @router.get("/health")
@@ -90,6 +106,6 @@ def post_event(
             provider=request.app.state.ai_provider,
         )
     except machine.TransitionError as e:
-        status = 422 if e.code == "sql_required" else 409
+        status = 422 if e.code in VALIDATION_CODES else 409
         raise HTTPException(status, {"code": e.code, "message": e.message}) from e
     return _turn_out(turn)

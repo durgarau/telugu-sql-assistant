@@ -44,6 +44,7 @@ class Material:
     strong_hint: str | None = None
     solution_sql: str | None = None
     student_sql: str | None = None
+    facts: tuple[str, ...] = ()
     failed_attempts: int = 0
     already_said: tuple[str, ...] = ()
 
@@ -86,13 +87,15 @@ def _structural(m: Material) -> str:
 
 def _error(m: Material) -> str:
     sql = _need(m.student_sql, "student_sql")
+    facts = "\n".join(f"- {f}" for f in m.facts) or "- (no specific findings)"
     return (
         f"The learner submitted this query (attempt {m.failed_attempts}):\n"
         f"```sql\n{_clip(sql)}\n```\n"
-        "The automatic checker says its result does not match the question. "
-        "First say what is correct in their attempt. Then point to the most likely problem, "
-        "explain why it is a problem, and how to think about fixing it. Show the location "
-        "with a ____ blank instead of the fix. Ask them to try again."
+        "The automatic checker ran it against the practice database. Its findings are "
+        f"verified, so trust them over your own guess:\n{facts}\n\n"
+        "First say what is correct in their attempt. Then explain the most important "
+        "finding in simple words: what is wrong, why, and how to think about fixing it. "
+        "Show the location with a ____ blank instead of the fix. Ask them to try again."
     )
 
 

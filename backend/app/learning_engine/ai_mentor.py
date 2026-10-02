@@ -11,6 +11,7 @@ def material_for(
     q: Question,
     *,
     student_sql: str | None = None,
+    facts: tuple[str, ...] = (),
     already_said: tuple[str, ...] = (),
 ) -> Material:
     """Only what the learner has been shown, or is being shown in this turn."""
@@ -22,6 +23,7 @@ def material_for(
         strong_hint=q.strong_hint if level >= 3 else None,
         solution_sql=q.correct_sql if p.state in REVEAL_STATES else None,
         student_sql=student_sql,
+        facts=facts,
         failed_attempts=p.failed_attempts,
         already_said=already_said,
     )

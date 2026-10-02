@@ -40,7 +40,11 @@ Before a message reaches the learner in a working state, `guard.leaks_solution` 
 - the full normalized `correct_sql`, or
 - any **hidden answer line**: a line of `correct_sql` that does not appear in the skeleton (for example `GROUP BY city` or `LIMIT 5`). `FROM <table>` lines are exempt because the question already names the table.
 
-Matching ignores case and whitespace. If an AI reply is blocked, or the provider fails, the learner gets the tested canned message for that state. Each event records `mentor_source` as `ai`, `canned` or `fallback`, so leak and outage rates can be measured.
+Matching ignores case and whitespace. Text the learner has typed in any of their submissions is never a leak, so feedback can say "your `GROUP BY city` is right" when they wrote it.
+
+## Checker facts (M3)
+
+For ERROR_ANALYSIS, the prompt includes the evaluator's verified findings (row and column differences, mistake tags) and tells the model to trust them over its own guess. The facts only say where to look, never what to write, and a test runs typical wrong attempts for every question and checks that the facts never contain the answer. If an AI reply is blocked, or the provider fails, the learner gets the tested canned message for that state. Each event records `mentor_source` as `ai`, `canned` or `fallback`, so leak and outage rates can be measured.
 
 ## System prompt rules
 
@@ -52,5 +56,4 @@ Matching ignores case and whitespace. If an AI reply is blocked, or the provider
 ## Not done yet
 
 - **Quality review with a real model.** Needs `OPENROUTER_API_KEY` and `OPENROUTER_MODEL`. Plan: generate hints for every question × state, read them for natural Telugu-English, and tune the system prompt.
-- **Exact diagnostics for ERROR_ANALYSIS** (M3): row-count differences, rule-based mistake tags such as missing quotes or `= NULL`, to be passed to the model as facts.
 - **Telugu-script normalization:** the guard only looks at the SQL text; transliterated SQL in Telugu script is not a realistic leak path.
